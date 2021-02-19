@@ -1,0 +1,101 @@
+/* body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+} */
+* {
+  box-sizing: border-box;
+  /* padding: 0; */
+  /* padding: 0; */
+  text-align: center;
+  margin: 0;
+  font-family: "Lato", sans-serif;
+  background: linear-gradient(to right, #355c7d, #6c5b7b, #c06c84);
+}
+
+header h1 {
+  margin: 25px;
+  color: white;
+}
+
+h1 {
+  color: white;
+}
+
+header {
+  width: 100%;
+  height: 50px;
+  color: white;
+}
+
+.to-do-list-adder {
+  /* border: pink solid 2px; */
+  width: 100%;
+  height: 210px;
+}
+
+h5 {
+  margin: 10px;
+  color: white;
+}
+
+.submit {
+  margin: 5px;
+}
+
+.user-confirmed-to-dos {
+  /* border: solid 2px black; */
+}
+
+.to-do-list-container {
+  /* border: solid 2px orange; */
+  width: 100%;
+  height: 500px;
+}
+
+.user-confirmed-to-dos-container {
+  /* border: solid 2px blue; */
+  width: 100%;
+  height: 300px;
+  /* text-align: center; */
+}
+
+#confirmed-to-do-list {
+  text-align: center;
+  /* float: left;
+  margin-right: 5px; */
+}
+
+.listDecoration {
+  list-style: none;
+}
+li {
+  list-style: none;
+  color: white;
+  /* border: black solid 2px; */
+}
+
+/* .float {
+  float: left;
+  margin-right: 5px;
+} */
+
+.to-do-confirmed-entry {
+  /* border: black solid 2px; */
+}
+
+.container {
+  background-color: white;
+}
+
+/* ol li {
+  justify-content: center;
+} */
