@@ -1,147 +1,63 @@
-import React, { useState, useReducer, useEffect, useCallback, memo } from 'react'
-import AddButton from './AddButton'
-import PutToDoTasksOntoDom from './PutToDoTasksOntoDom'
-import PutCompItemsOntoDom from './PutCompItemsOntoDom'
+import React, { useState, useEffect} from 'react'
 
-
-
-
-
-const initialState = {
-    toDoTasks: [],
-    completion: [],
-}
-
-
-
-const reducer = (previousToDoItems, action) => {
-    if (action.type === "CONFIRMED_TO_DO") {
-        console.log('CONFIRMED')
-        const newTask = action.confirmedToDo;
-        return {
-            ...previousToDoItems,
-            toDoTasks: [...previousToDoItems.toDoTasks, newTask],
-        }
-    } else if (action.type === "COMPLETED") {
-        console.log('COMPLETED')
-        console.log(action.payload)
-        let completedItem = action.payload
-        var upDatedToDoTasks = previousToDoItems.toDoTasks.filter((item) => {
-            console.log("hello",item.id);
-            return item.id !== action.payload.id
-        })
-        console.log(upDatedToDoTasks);
-        return {
-            ...previousToDoItems,
-            toDoTasks: upDatedToDoTasks,
-            completion: [...previousToDoItems.completion, completedItem]
-        }
-    } else if (action.type === "DELETE") {
-        console.log('DELETE')
-        let toDoTasksCheck = previousToDoItems.toDoTasks.includes(action.payload);
-        let completionCheck = previousToDoItems.completion.includes(action.payload);
-        console.log("to-do check",toDoTasksCheck);
-        console.log("completion check",completionCheck);
-        if(toDoTasksCheck === true)
-        {
-            var upDatedToDoTasks = previousToDoItems.toDoTasks.filter((tasks) => {
-            return tasks.id !== action.payload.id;
-        })
-            return {
-                ...previousToDoItems,
-                toDoTasks: upDatedToDoTasks,
-            
-        } 
-            } else if (completionCheck === true) {
-            let updatedCompletion = previousToDoItems.completion.filter((item) => {
-                    return item.id !== action.payload.id
-                })
-                return {
-                    ...previousToDoItems,
-                    completion: updatedCompletion
-                }
-        }
-    } else if (action.type === "SAVED") {
-        console.log("SAVED")
-        const toDoTasks = JSON.stringify(action.payload.toDoTasks)
-        const completions = JSON.stringify(action.payload.completion)
-        localStorage.setItem("Saved-To-Do-Tasks", toDoTasks);
-        localStorage.setItem("Saved-Completions", completions);
-        return {
-            ...previousToDoItems
-        } 
-    } 
-}
-//WHAT I WANT: when the user presses the add button, have the item first be entered into the toDoArray and then have a function that will put that item onto the UI. 
-// WHAT I WANT: form the array of objects, I want the value of the task property to be displayed onto the UI
-const getUserDataFromLocalStorage = () => {
-    const toDoTasksGet = localStorage.getItem("Saved-To-Do-Tasks");
-    const completionGet = localStorage.getItem("Saved-Completions");
-    console.log(completionGet);
-    if (toDoTasksGet !== null && completionGet.length !== null) {
-        return {
-            toDoTasks: JSON.parse(toDoTasksGet),
-            completion: JSON.parse(completionGet)
-        }
-    } else if (toDoTasksGet == null && completionGet == null) {
-        return {
-            toDoTasks: [],
-            completion: []
-        }
-    } else if (toDoTasksGet !== null && completionGet == null) {
-        return {
-            toDoTasks: JSON.parse(toDoTasksGet),
-            completion: []
-        }
-    } else if (toDoTasksGet == null && completionGet !== null) {
-        return {
-            toDoTasks: [],
-            completion: JSON.parse(toDoTasksGet)
-        }
-
-    }
-
-}
 const Index = () => {
     const [toDoItem, setToDoItem] = useState('');
-    // currentToDoItems will always begin as an empty array by default
-    const [currentToDoItems, dispatch] = useReducer(reducer, initialState, getUserDataFromLocalStorage);
-    const AddToDo = useCallback((reset) => {
+    const [toDoItemsArray, setToDoItemsArray] = useState([])
+    const [dueDate, setDueDate] = useState('')
+    const [completionArray, setCompletionArray] = useState([]);
+    const AddToDo = (reset) => {
         reset.preventDefault()
-        console.log("I was executed")
-        console.log("task", toDoItem)
-        let confirmedToDo = { id: new Date().getTime().toString(), Task: toDoItem, completed: false };
-        console.log(confirmedToDo.Task)
-        setToDoItem(" ")
-        dispatch({ type: ("CONFIRMED_TO_DO"), confirmedToDo });
-        // ASK Ilya about this:
-    },[toDoItem, currentToDoItems.toDoTasks]);
-    
-    // const CompletedItem = useCallback(( task) => {
-    //     console.log("Completed Button was pressed")
-    //         dispatch({type:"COMPLETED", payload: task})    
-    // },[toDoItem, currentToDoItems])
-     const CompletedItem = (task) => {
-        console.log("Completed Button was pressed")
-            dispatch({type:"COMPLETED", payload: task})    
-     }
-    const DeleteMe = (task) => {
-        console.log("DelteButton was pressed")
-        dispatch({ type: "DELETE", payload: task })
+        let confirmedToDo = { id: new Date().getTime().toString(), task: toDoItem, completed: false, dueDate: dueDate};
+        setToDoItemsArray(previousArray => [...previousArray, confirmedToDo]);
+        setToDoItem(" ");
+        setDueDate(" ");
+    };
+    const toDoTaskMarkedAsCompleted = (item) => {
+        let completedItem;
+        if (item.completed === false) {
+            completedItem = { id: item.id, task: item.task, dueDate: item.dueDate, completed: true }
+        }
+        return completedItem;
     }
-    useEffect(()=> {
-        dispatch({ type: "SAVED", payload: currentToDoItems })
-        console.log("currentToDoItems", currentToDoItems);
-    }, [currentToDoItems.toDoTasks, currentToDoItems.completion])
+    const ItemCompleted = (completion) => {
+        let completedItem = toDoTaskMarkedAsCompleted(completion)
+        let upDatedToDoTasks = toDoItemsArray.filter((toDo) => {
+            return toDo.id !== completion.id
+        })
+        setToDoItemsArray(upDatedToDoTasks);
+        setCompletionArray(previousCompletions => [...previousCompletions, completedItem])
+    }
+    const DeleteMe = (item, array, fn) => {
+        let updatedArray = array.filter((deleteItem)=>{
+            return deleteItem.id !== item.id
+        })
+        fn(updatedArray);
+    }
+    
+    useEffect(() => {
+        const getToDoTasks = JSON.parse(localStorage.getItem("Saved-To-Do-Tasks"));
+        const getCompletions = JSON.parse(localStorage.getItem("Saved-Completions"));
+        setToDoItemsArray(getToDoTasks);
+        setCompletionArray(getCompletions);
+
+    },[])
+
+    useEffect(() => {
+        const toDoTasks = JSON.stringify(toDoItemsArray)
+        const completions = JSON.stringify(completionArray)
+        localStorage.setItem("Saved-To-Do-Tasks", toDoTasks);
+        localStorage.setItem("Saved-Completions", completions);
+    })
+
     return (
         <>
         <div className="to-do-list-adder">
                 <h5>Add Task</h5>
                 <form onSubmit={AddToDo}>      
                     <input type="text" value={(toDoItem)} onChange={(typing) => { setToDoItem(typing.target.value) }} />
-                <br/>
-                <br/>
-                    <AddButton onSubmit={AddToDo}/>
+                    <br />
+                    <br/>
+                    <button onSubmit={AddToDo}>ADD</button>
                 </form>
         </div>
 
@@ -150,14 +66,16 @@ const Index = () => {
                     <h1>My To-do List</h1>
                     <div className="user-confirmed-to-dos-container">
                         <ul id="confirmed-to-do-list">
-                            {console.log(currentToDoItems.toDoTasks)}
-                            <PutToDoTasksOntoDom array={currentToDoItems.toDoTasks} CompFn={CompletedItem} DeleteFn={DeleteMe}/>
-
+                            {console.log("line 112", toDoItemsArray)}
+                            {toDoItemsArray.map((item) => {
+                                return (
+                                        <li>{item.task} <button onClick={() => ItemCompleted(item)}>✅</button> <button onClick={()=>DeleteMe(item, toDoItemsArray, setToDoItemsArray)}>🗑️</button> DUE ON: <input type="date" value={(dueDate)} onChange={(typing) => { setDueDate(typing.target.value) }}></input></li>  
+                                );
+                            })}
                         </ul>
                     </div>     
                         </div>    
                 </header>
-    
     <div class="to-do-list-container">
     <div class="user-confirmed-to-dos-container">
         <ul id="confirmed-to-do-list">
@@ -166,13 +84,16 @@ const Index = () => {
     <div class="completion-containter">
         <h1>Your Completions. Great Job!</h1>
         <ol id="user-completion-list">
-            <PutCompItemsOntoDom array={currentToDoItems.completion} DeleteFn={DeleteMe}/>
+            {completionArray.map((item) => {
+                return (
+                    <li>{item.task}<button onClick={() => DeleteMe(item, completionArray, setCompletionArray)}>🗑️</button></li>  
+                );   
+            })}
         </ol>
         
     </div>
             </div>
+            {console.log(toDoItemsArray)}
         </>
-    )
-}
-
+    )}
 export default Index;
