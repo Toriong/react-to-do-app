@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import Task from './Task'
 import Modal from './Modal'
+import ModalForClears from './ModalForClears'
 
 const Index = () => {
     const [toDoItem, setToDoItem] = useState('');
+    const [getClearOptionValue, setGetClearOptionValue] = useState("make a selection")
+    const [modalForClears, setModalForClears] = useState(false);
     const [dueDate, setDueDate] = useState('')
     const [userInputArray, setUserInputArray] = useState([])
     const defaultModalState = {
@@ -16,10 +19,7 @@ const Index = () => {
         reset.preventDefault()
         let confirmedToDo = { id: new Date().getTime().toString(), task: toDoItem, completed: false, dueDate: dueDate };
         setUserInputArray(previousArray => [...previousArray, confirmedToDo]);
-        setModalState({
-            isOpen: true,
-            modalContent: "Task ADDED"
-        })
+        setModalState({ isOpen: true, modalContent: "Task ADDED" })
         setToDoItem(" ");
         setDueDate(" ");
     };
@@ -28,15 +28,12 @@ const Index = () => {
             return deleteItem.id !== item.id
         })
         setUserInputArray(updatedArray);
-        setModalState({
-            isOpen: true,
-            modalContent: "Item DELETED"
-        })
+        setModalState({ isOpen: true, modalContent: "Item DELETED" })
     }
 
     const completedItem = (targetItem) => {
         let updatedArray = userInputArray.map((item) => {
-            if (item.id === targetItem.id) {
+            if (item.id === targetItem) {
                 return {
                     ...item,
                     completed: true
@@ -45,7 +42,9 @@ const Index = () => {
                 return item;
             }
         })
+
         setUserInputArray(updatedArray);
+        setModalState({ isOpen: true, modalContent: "Task COMPLETED" })
     }
 
     const confirmChange = (targetedTask, closeFunction) => {
@@ -64,31 +63,38 @@ const Index = () => {
         closeFunction(false)
     }
 
-    useEffect(() => {
-        let getItems = JSON.parse(localStorage.getItem("User-Input-Array"));
-        setUserInputArray(getItems);
-    }, [])
-
     const executeClear = () => {
         if (getClearOptionValue === "CLEAR TO-DOS") {
             const updatedArray = userInputArray.filter((item) => {
                 return item.completed !== false;
             })
             setUserInputArray(updatedArray);
+            setModalState({ isOpen: true, modalContent: "To-do list cleared" })
+            setModalForClears(!modalForClears)
         } else if (getClearOptionValue === "CLEAR COMPLETIONS") {
             const updatedArray = userInputArray.filter((item) => {
                 return item.completed !== true;
             })
             setUserInputArray(updatedArray);
+            setModalState({ isOpen: true, modalContent: "Completions cleared" })
+            setModalForClears(!modalForClears)
         } else if (getClearOptionValue === "CLEAR ALL") {
             setUserInputArray([]);
+            setModalState({ isOpen: true, modalContent: "ALL cleared" })
+            setModalForClears(!modalForClears)
         }
     }
-    const [getClearOptionValue, setGetClearOptionValue] = useState('')
+
+    useEffect(() => {
+        let getItems = JSON.parse(localStorage.getItem("User-Input-Array"));
+        console.log(getItems);
+        setUserInputArray(getItems);
+    }, [])
 
     useEffect(() => {
         let save = JSON.stringify(userInputArray)
         localStorage.setItem("User-Input-Array", save)
+        console.log(userInputArray)
     }, [userInputArray])
 
 
@@ -110,14 +116,15 @@ const Index = () => {
                 <br />
                 <h5>CLEAR ITEMS</h5>
                 <select id="clear-container" onChange={(click) => setGetClearOptionValue(click.target.value)}>
-                    <option id="clear-options" value={"make a selection"}>make a selection</option>
+                    <option id="clear-options" defaultValue={"make a selection"}>make a selection</option>
                     <option id="clear-to-dos" value={"CLEAR TO-DOS"}>CLEAR TO DOS</option>
                     <option id="clear-completions" value={"CLEAR COMPLETIONS"}>CLEAR COMPLETIONS</option>
                     <option id="clear-all" value={"CLEAR ALL"}>CLEAR ALL</option>
                 </select>
                 <br />
+                {modalForClears && <ModalForClears cancelFunction={setModalForClears} clearFunction={executeClear} getClearOptionValue={getClearOptionValue} modalForClears={modalForClears} />}
                 <br />
-                <button id="clear-button" onClick={executeClear}>CONFIRM CLEAR</button>
+                <button id="clear-button" onClick={() => setModalForClears(!modalForClears)}>CLEAR</button>
             </div>
             <div id="confirmed-to-do-list">
                 <h1>My To-do List</h1>
@@ -125,9 +132,7 @@ const Index = () => {
                     {userInputArray.map((item) => {
                         if (item.completed === false) {
                             return (
-                                <>
-                                    <Task taskItem={item} deleteItem={() => deleteMe(item)} completedItem={() => completedItem(item)} confirmChange={confirmChange} />
-                                </>
+                                <Task taskItem={item} deleteItem={() => deleteMe(item)} completedItem={() => completedItem(item.id)} confirmChange={confirmChange} />
                             )
                         } else {
                             return null;
@@ -135,7 +140,6 @@ const Index = () => {
                     })}
                 </ul>
             </div>
-
             <div class="completion-container">
                 <h1>Your Completions. Great Job!</h1>
                 <ul id="user-completion-list">
