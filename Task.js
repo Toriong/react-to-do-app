@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 
-const Task = ({ taskItem, deleteItem, completedItem, confirmChange }) => {
+const Task = ({ taskItem, deleteItem, completedItem, confirmChange, showModalFunction, object }) => {
+
     const userItem = {
         task: taskItem.task,
         dueDate: taskItem.dueDate,
@@ -24,12 +25,14 @@ const Task = ({ taskItem, deleteItem, completedItem, confirmChange }) => {
         editTask.task = taskItem.task
         editTask.dueDate = taskItem.dueDate
         setEditMe(false);
+        showModalFunction(object);
     }
 
     return (
         <>
             {editMe ?
-                <div id="blocker">
+                <>
+                    <div id="blocker" onClick={cancel} />
                     <div className="edit-item-modal">
                         <h3>EDIT YOUR TASK</h3>
                         <input id="userTask" type="text" defaultValue={editTask.task} name="task" onChange={edits} />
@@ -37,23 +40,24 @@ const Task = ({ taskItem, deleteItem, completedItem, confirmChange }) => {
                         <button type="button" id="confirm-button" onClick={() => confirmChange(editTask, setEditMe)}>CONFIRM CHANGES</button>
                         <button type="button" id="cancel-button" onClick={() => cancel()}>CANCEL</button>
                     </div>
-                </div>
+                </>
                 :
-
-                <div className="list-item-container">
-
-                    <div className="due-date">
-                        <div onClick={() => clickToEdit()}>{taskItem.task}</div>
-                    </div>
-                    <div className="button-container">
-                        <div className="due-date" onClick={() => clickToEdit()}>DUE ON: {taskItem.dueDate}</div>
-                        <div className="buttons">
-                            <button onClick={() => completedItem(taskItem)}>COMPLETED</button><button onClick={() => deleteItem(taskItem)}>DEL</button>
+                <>
+                    <div className="list-item-container">
+                        <div className="item" onClick={() => clickToEdit()}>
+                            <p>
+                                {taskItem.task}
+                            </p>
+                        </div>
+                        <div className="button-container">
+                            <div className="due-date" onClick={() => clickToEdit()}>DUE ON: {taskItem.dueDate}</div>
+                            <div className="buttons">
+                                <button onClick={() => completedItem(taskItem)}>COMPLETED</button><button onClick={() => deleteItem(taskItem)}>DEL</button>
+                            </div>
                         </div>
                     </div>
+                </>
 
-
-                </div>
 
             }
         </>
