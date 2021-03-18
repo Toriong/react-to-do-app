@@ -4,60 +4,55 @@ import Modal from './Modal'
 import ModalForClears from './ModalForClears'
 import moment from 'moment'
 
+const updateDefaultDate = (setDueDate) => {
+    var currentTime = new Date(),
+        hours = currentTime.getHours(),
+        minutes = currentTime.getMinutes(),
+        seconds = currentTime.getSeconds(),
+        text = (hours + ':' + minutes + ':' + seconds);
+    console.log(text);
+    if (text === "0:0:0") {
+        setDueDate(moment().format("YYYY-MM-DD"))
+    } else {
+        console.log("present day")
+    }
+}
+
+
+
 const Index = () => {
-    const todaysDate = moment().format("YYYY-MM-DD");
+    const todaysDate = moment().format("YYYY-MM-DD")
     const [toDoItem, setToDoItem] = useState('');
     const [getClearOptionValue, setGetClearOptionValue] = useState("make a selection")
-    const [modalForClears, setModalForClears] = useState(false);
+    const [isModalForClearsOpen, setIsModalForClearsOpen] = useState(false);
     const [dueDate, setDueDate] = useState(todaysDate);
-    const [userInputArray, setUserInputArray] = useState([])
-    const defaultModalState = { isOpen: false, content: " " }
-    const [modalState, setModalState] = useState(defaultModalState)
+    const [userToDoList, setUserToDoList] = useState([])
+    const [modalOpen, setModalOpen] = useState({ isOpen: false, content: " " })
 
-    const addToDo = (reset) => {
-        reset.preventDefault()
-        console.log(typeof toDoItem)
+    useEffect(() => {
+        setInterval(() => { updateDefaultDate(setDueDate) }, 1000)
+    }, [dueDate])
+    const addToDo = (event) => {
+        event.preventDefault()
         if (toDoItem === '' || toDoItem.trim().length === 0) {
-            setModalState({ isOpen: true, content: "ENTER A TASK" })
+            setModalOpen({ isOpen: true, content: "ENTER A TASK" })
             return;
         }
         if (dueDate.length > 10) {
-            setModalState({ isOpen: true, content: "ENTER A VALID DATE" })
+            setModalOpen({ isOpen: true, content: "ENTER A VALID DATE" })
             return;
         }
-        console.log(dueDate)
-        console.log(typeof dueDate)
-        let confirmedToDo = { id: new Date().getTime().toString(), task: toDoItem, completed: false, dueDate: dueDate };
-        setUserInputArray(previousArray => [...previousArray, confirmedToDo]);
-        // change modalState.isOpen to true
-        setModalState({ isOpen: true, content: "Task ADDED" })
+        let confirmedToDo = { id: Math.random().toString(16).slice(2).toString(), task: toDoItem, completed: false, dueDate: dueDate };
+        setUserToDoList(previousArray => [...previousArray, confirmedToDo]);
+        setModalOpen({ isOpen: true, content: "Task ADDED" })
         setToDoItem('');
         setDueDate(todaysDate);
     };
-    const deleteMe = (item) => {
-        let updatedArray = userInputArray.filter((deleteItem) => {
-            return deleteItem.id !== item.id
-        })
-        setUserInputArray(updatedArray);
-        setModalState({ isOpen: true, content: "Item DELETED" })
+
+    const updateList = (newArray, modalObject) => {
+        setUserToDoList(newArray);
+        setModalOpen(modalObject);
     }
-
-    const completedItem = (targetItem) => {
-        let updatedArray = userInputArray.map((item) => {
-            if (item.id === targetItem) {
-                return {
-                    ...item,
-                    completed: true
-                }
-            } else {
-                return item;
-            }
-        })
-
-        setUserInputArray(updatedArray);
-        setModalState({ isOpen: true, content: "Task COMPLETED" })
-    }
-
     const confirmChange = (targetedTask, closeFunction) => {
         if (targetedTask.task === '' || targetedTask.task.trim().length === 0) {
             alert("Enter a task")
@@ -67,7 +62,7 @@ const Index = () => {
             alert("Enter a valid date")
             return;
         }
-        let updatedUserInputArray = userInputArray.map((item) => {
+        setUserToDoList(userToDoList.map((item) => {
             if (item.id === targetedTask.id) {
                 return {
                     ...item,
@@ -77,97 +72,76 @@ const Index = () => {
             } else {
                 return item;
             }
-        })
-        setUserInputArray(updatedUserInputArray);
+        }));
         closeFunction(false)
-        setModalState({ isOpen: true, content: "Changes SAVED" })
+        setModalOpen({ isOpen: true, content: "Changes SAVED" })
+    }
+    const clearSelectedItems = (updatedArray, modalContent) => {
+        setUserToDoList(updatedArray);
+        setIsModalForClearsOpen(!isModalForClearsOpen);
+        setModalOpen(modalContent)
     }
 
-    const executeClear = () => {
-        if (getClearOptionValue === "CLEAR TO-DOS") {
-            const updatedArray = userInputArray.filter((item) => {
-                return item.completed !== false;
-            })
-            setUserInputArray(updatedArray);
-            setModalForClears(!modalForClears)
-            setModalState({ isOpen: true, content: "To-do list cleared" })
-        } else if (getClearOptionValue === "CLEAR COMPLETIONS") {
-            const updatedArray = userInputArray.filter((item) => {
-                return item.completed !== true;
-            })
-            setUserInputArray(updatedArray);
-            setModalForClears(!modalForClears)
-            setModalState({ isOpen: true, content: "Completions cleared" })
-        } else if (getClearOptionValue === "CLEAR ALL") {
-            setUserInputArray([]);
-            setModalForClears(!modalForClears)
-            setModalState({ isOpen: true, content: "ALL cleared" })
+    // closure 
+    // previus name 'executeClear'
+    const clearAll = () => {
+        if (getClearOptionValue === "to-dos") {
+            // originally, updatedArray
+            clearSelectedItems(userToDoList.filter((item) => item.completed), { isOpen: true, content: "To-do list cleared" })
+        }
+        else if (getClearOptionValue === "completions") {
+            // originally, updatedArray
+            clearSelectedItems(userToDoList.filter((item) => !item.completed), { isOpen: true, content: "Completions list cleared" })
+        }
+        else if (getClearOptionValue === "all") {
+            clearSelectedItems([], { isOpen: true, content: "To-do list cleared" })
         }
     }
-
     useEffect(() => {
-        let getItems = JSON.parse(localStorage.getItem("User-Input-Array"));
-        console.log(getItems);
-        setUserInputArray(getItems);
+        setUserToDoList(JSON.parse(localStorage.getItem("User-Input-Array")));
     }, [])
-
     useEffect(() => {
-        let save = JSON.stringify(userInputArray)
-        localStorage.setItem("User-Input-Array", save)
-        console.log(userInputArray)
-    }, [userInputArray])
-
-    const undo = (undoItem) => {
-        let updatedArray = userInputArray.map((item) => {
-            if (item.id === undoItem.id) {
-                return {
-                    ...undoItem,
-                    completed: false
-                }
-            } else {
-                return item;
-            }
-        })
-        setUserInputArray(updatedArray)
-        setModalState({ isOpen: true, content: "UNDO" })
-    }
+        localStorage.setItem("User-Input-Array", JSON.stringify(userToDoList))
+    }, [userToDoList])
     return (
         <>
             <div className="modal-container">
-                {/* conditionally call the modal */}
-                {modalState.isOpen && <Modal modalContent={modalState.content} setModal={setModalState} />}
+                {modalOpen.isOpen && <Modal modal={modalOpen} setModal={setModalOpen} />}
             </div>
             <div className="to-do-list-adder">
                 <h5>TASK:</h5>
                 <form onSubmit={addToDo}>
-                    <input type="text" value={(toDoItem)} onChange={(typing) => { setToDoItem(typing.target.value) }} />
+                    <input id="to-do-input" type="text" value={(toDoItem)} onChange={(event) => { setToDoItem(event.target.value) }} />
                     <h5>DUE ON: </h5>
-                    <input type="date" value={(dueDate)} onChange={(typing) => { setDueDate(typing.target.value) }}></input>
-                    <br />
-                    <br />
-                    <button onSubmit={addToDo}>ADD</button>
+                    <input id="date-input" type="date" value={dueDate} onChange={(event) => { setDueDate(event.target.value) }}></input>
+                    <button id="add-button" onSubmit={addToDo}>ADD</button>
                 </form>
-                <br />
-                <h5>CLEAR ITEMS</h5>
-                <select id="clear-container" onChange={(click) => setGetClearOptionValue(click.target.value)}>
-                    <option id="clear-options" defaultValue={"make a selection"}>make a selection</option>
-                    <option id="clear-to-dos" value={"CLEAR TO-DOS"}>CLEAR TO DOS</option>
-                    <option id="clear-completions" value={"CLEAR COMPLETIONS"}>CLEAR COMPLETIONS</option>
-                    <option id="clear-all" value={"CLEAR ALL"}>CLEAR ALL</option>
+                <h5 id="clear-items-title">CLEAR ITEMS</h5>
+                <select id="clear-menu" onChange={(event) => { setGetClearOptionValue(event.target.value) }}>
+                    <option value="please make a selection" >make a selection</option>
+                    <option value="to-dos"  >CLEAR TO-DOS</option>
+                    <option value="completions" >CLEAR COMPLETIONS</option>
+                    <option value="all"  >CLEAR ALL</option>
                 </select>
-                <br />
-                {modalForClears && <ModalForClears cancelFunction={setModalForClears} clearFunction={executeClear} getClearOptionValue={getClearOptionValue} modalForClears={modalForClears} />}
-                <br />
-                <button id="clear-button" onClick={() => setModalForClears(!modalForClears)}>CLEAR</button>
+                {isModalForClearsOpen && <ModalForClears cancelFunction={() => { setIsModalForClearsOpen(!isModalForClearsOpen) }} clearFunction={clearAll} value={getClearOptionValue} />}
+                <button id="clear-button" onClick={() => { setIsModalForClearsOpen(!isModalForClearsOpen) }}>CLEAR</button>
             </div>
             <div id="confirmed-to-do-list">
                 <h1>My To-do List</h1>
                 <ul className="to-do-list">
-                    {userInputArray.map((item) => {
-                        if (item.completed === false) {
+                    {userToDoList.map((toDoTask) => {
+                        if (toDoTask.completed === false) {
                             return (
-                                <Task taskItem={item} deleteItem={() => deleteMe(item)} completedItem={() => completedItem(item.id)} confirmChange={confirmChange} showModalFunction={setModalState} object={{ isOpen: true, content: "NO CHANGES HAVE OCCURED" }} />
-                            )
+                                <Task taskItem={toDoTask} deleteItem={() => {
+                                    updateList(userToDoList.filter((deleteItem) => {
+                                        return deleteItem.id !== toDoTask.id
+                                    }), { isOpen: true, content: "Item DELETED" })
+                                }} completedItem={() => {
+                                    updateList(userToDoList.map((item) => {
+                                        if (item.id === toDoTask.id) { return { ...item, completed: true } } else { return item; }
+                                    }), { isOpen: true, content: "Task COMPLETED" }
+                                    )
+                                }} confirmChange={confirmChange} showModalFunction={setModalOpen} object={{ isOpen: true, content: "NO CHANGES HAVE OCCURED" }} />)
                         } else {
                             return null;
                         }
@@ -177,19 +151,34 @@ const Index = () => {
             <div class="completion-container">
                 <h1>Your Completions. Great Job!</h1>
                 <ul id="user-completion-list">
-                    {userInputArray.map((item) => {
-                        if (item.completed === true) {
+                    {userToDoList.map((completedItem) => {
+                        if (completedItem.completed === true) {
                             return (
                                 <div className="list-item-container-for-completions">
                                     <div className="completions">
                                         <p>
-                                            {item.task}
+                                            {completedItem.task}
                                         </p>
                                     </div>
                                     <div className="button-container">
                                         <div className="buttons">
-                                            <button onClick={() => undo(item)}>UNDO</button>
-                                            <button onClick={() => deleteMe(item)}>DEL</button>
+                                            <button onClick={() => {
+                                                updateList(userToDoList.map((item) => {
+                                                    if (item.id === completedItem.id) {
+                                                        return {
+                                                            ...item,
+                                                            completed: false
+                                                        }
+                                                    } else {
+                                                        return item;
+                                                    }
+                                                }), { isOpen: true, content: "UNDO" })
+                                            }}>UNDO</button>
+                                            <button onClick={() => {
+                                                updateList(userToDoList.filter((deleteItem) => {
+                                                    return deleteItem.id !== completedItem.id
+                                                }), { isOpen: true, content: "Item DELETED" })
+                                            }}>DEL</button>
                                         </div>
                                     </div>
                                 </div>
