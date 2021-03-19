@@ -1,19 +1,15 @@
 import React, { useEffect } from 'react'
 
-const Modal = ({ setModal, modalState }) => {
+const Modal = ({ setModal, modal }) => {
     useEffect(() => {
-        setTimeout(() => {
-            setModal({
-                isOpen: false,
-                modalContent: " "
-            })
-        }, 3000)
-    })
-    return (
-        <div className="modal-add-delete">
-            {modalState.modalContent}
-        </div>
-    );
+        let closeModal = setTimeout(() => { setModal({ isOpen: false }) }, 3000)
+        if (closeModal) {
+            return () => {
+                clearTimeout(closeModal);
+            };
+        };
+    }, [modal, setModal])
+    return <div className="modal-add-delete">{modal.content}</div>
 }
 
-export default Modal
+export default Modal;
